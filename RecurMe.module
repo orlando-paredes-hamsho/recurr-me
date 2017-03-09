@@ -1,0 +1,203 @@
+<?php
+	
+/**
+ * RecurMe
+ *
+ * Module for handling Recurrent events
+ * 
+ * @imports PHP-RRule https://github.com/rlanvin/php-rrule
+ * @imports EventPage 
+ *
+ * @method public static void getModuleInfo()
+ * @method public void init()
+ * @method public RRule rrule($config)
+ * @method public Array getOccurrenceArray($config, $format='r')
+ * @method public String getOccurrenceString($config)
+ * @method public Array makeOccurrenceDateArray(String $occurrenceString, $separator=';')
+ * @method public selectorString parseOccurrenceSelector($config)
+ * @method private EventPage function makeEventPages(Page $page)
+ * 
+ */
+
+class RecurMe extends WireData implements Module {
+	
+	/**
+	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
+	 *
+	 * @return array
+	 *
+	 */
+	public static function getModuleInfo() {
+
+		return array(
+			'title' => 'RecurMe', 
+			'version' => 0, 
+			'summary' => 'Module for handling recurrent events.',
+			'href' => 'https://processwire.com',
+			'singular' => true, 
+			'autoload' => false, 
+			'icon' => 'lemon-o', 
+		);
+		
+	}
+	
+	/**
+	 * Initialize the module
+	 *
+	 * Requiring the full set of RRule libraries and the EventPage Class
+	 *
+	 */
+	public function init() {
+		require_once(dirname(__FILE__) . '/php-rrule/src/RRuleInterface.php');
+		require_once(dirname(__FILE__) . '/php-rrule/src/RRule.php');
+		require_once(dirname(__FILE__) . '/php-rrule/src/RSet.php');
+		require_once(dirname(__FILE__) . '/EventPage.php');
+	}	
+	
+	/**
+     * rrule is a processwire method wrapper for creating an RRule object
+     *
+     * @param Array/String $config PHP RRule library config
+     * 
+     * @return RRule instance
+     * 
+     */
+	public function rrule($config) {
+		return new RRule\RRule($config);
+	}
+	
+	/**
+     * getOccurrenceArray returns an array of DateTime Objects that represent occurrences
+     *
+     * @param Array/String $config PHP RRule library config
+     * @param String $format can be any dateTime object format, defaults to r
+     * 
+     * @return Array of date strings
+     *
+     * There's a hard limit on occurrences of up to 500 using this method, to better store them as text
+     *
+     */
+	public function getOccurrenceArray($config, $format = 'r') {
+		$rrule = new RRule\RRule($config);		
+		$storableOccurrences = array();
+		
+		$occurrences = $rrule->getOccurrences();
+		
+		//If we exceed our highest amount of occurrences (500)
+		if(count($occurrences) > 500) {
+			throw new Exception('Maximum occurrence limit is 500, please specify a smaller number of occurrences');
+			return null;
+		}
+		
+		foreach($rrule as $occurrence) {
+			array_push($storableOccurrences, $occurrence->format('r'));
+		}
+		
+		return $storableOccurrences;
+	}
+     
+     /**
+     * getOccurrenceString returns a semicolon separated occurrenceString for storing in an occurrence field.
+     *
+     * @param Array/String $config PHP RRule library config
+     * 
+     * @return String of semicolon separated occurrenceStrings
+     *
+     * This is the recommended method for storing occurrences.
+     *
+     */
+	public function getOccurrenceString($config) {
+		$storableOccurrences = $this->getOccurrenceArray($config, 'r');
+		return implode(';',$storableOccurrences);
+	}
+
+     /**
+     * makeOccurrenceDateArray takes an occurrece string and converts it into a DateTimeArray
+     *
+     * @param String $occurrenceString (ideally) semicolon separated string of datetime strings 
+     * representing occurrences.
+     * @param String $separator Separator for exploding the occurrence string, defaults to semicolon
+     * 
+     * @return Array of DateTime Objects
+     *
+     * This is the recommended method for retrieving occurrences
+     * Make sure to match the separator to the one you used for storing!
+     *
+     */
+	public function makeOccurrenceDateArray(String $occurrenceString, $separator=';') {
+		$occurrenceArray = array();
+		$occurrences = explode($separator, $occurrenceString);
+		foreach($occurrences as $occurrence) {
+			array_push($occurrenceArray, new DateTime($occurrence));
+		}
+		return $occurrenceArray;
+	}
+	
+     /**
+     * parseOccurrenceSelector returns a ready to use processwire selector based on your configuration
+     *
+     * @param Array/String $config PHP RRule library config
+     * 
+     * @return selectorString
+     *
+     */
+	public function parseOccurrenceSelector($config) {
+		$occurrenceArray = array();
+		$occurrences = $this->getOccurrenceArray($config,'r');
+		foreach($occurrences as $occurrence) {
+			array_push($occurrenceArray, $this->wire('sanitizer')->selectorValue($occurrence));
+		}
+		$occurrenceSelector = implode('|',$occurrenceArray);
+		return "occurrences%=$occurrenceSelector";
+		
+	}
+	
+     /**
+     * makeEventpages converts every occurrence of a page into its own EventPage and returns the array
+     *
+     * @param Page $page must be a page with the occurrence field
+     * 
+     * @return Array of EventPages;
+     *
+     */
+	private function makeEventPages(Page $page) {
+		$eventArray = array();
+		$occurrences = $this->makeOccurrenceDateArray($page->occurrences);
+		echo count($occurrences);
+		foreach($occurrences as $occurrence) {
+			array_push($eventArray, new EventPage($occurrence,$page));
+		}
+		return $eventArray;
+	}
+	
+	/**
+     * getEvents is a helper function for retrieving all EventPages from a given PageArray
+     * 
+     * @param PageArray $pages
+     *
+     * @return Array of EventPages
+     *
+     */
+     //TODO: Get EventPages from all provided pages, add them to a single array
+	public function getEvents($pages) {
+		$page = $pages->first();
+		echo '<pre>'; print_r($this->makeEventPages($page)); echo '</pre>';
+	}
+	
+	/**
+     * find returns EventPages using the provided configuration
+     * 
+     * @param Array $options for finding the recurrent events
+     *
+     * @return Array of EventPages
+     *
+     */
+     //TODO: A lot.
+	public function find(Array $options) {
+		$occurrenceSelector = $this->parseOccurrenceSelector($options);
+		$results = $this->wire('pages')->find($occurrenceSelector);
+		return $results;
+	}
+	
+	
+}
