@@ -63,6 +63,11 @@ class RecurMe extends WireData implements Module {
      * 
      */
 	public function rrule($config) {
+		//If we have a string we want to check if its a string.
+		if(is_string($config)) {
+			//If the string comes from the db it may have changed the newline to a space
+			$config = str_replace(" ", "\n", $config);
+		}
 		return new RRule\RRule($config);
 	}
 	
