@@ -169,7 +169,7 @@ class OccurrencePage{
         $this->page = $page;
         
         //Initialize RRule related properties using the
-        $this->initRRuleProps($RRule);
+        $this->initRRuleProps($rrule);
         
         //initialize date related properties using the occurrence instance.
         $this->initDateProps($occurrence);
