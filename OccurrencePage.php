@@ -1,16 +1,17 @@
 <?php
 
 /**
- * EventPage 
+ * OccurrencePage 
  *
- * Helper class for handling RRule Occurrence Events
+ * Helper class for handling RRule Occurrences
  * Stores properties for easier access and holds a reference to the original page.
  *
- * @method private void initDateProps(DateTime $event)
+ * @method private void initDateProps(DateTime $rrule)
+ * @method private void initRRuleProps(RRule $rrule)
  *
  */
 
-class EventPage{
+class OccurrencePage{
 	
 	/**
      * Reference to the original page;
@@ -19,14 +20,6 @@ class EventPage{
      *
      */
 	public $page = NULL;
-	
-	/**
-     * List of occurrences defined by the rrule on the original page
-     *
-     * @var string
-     *
-     */
-	public $dateList = "";
 	
 	/**
      * Name of the week day, formatted using the week_days constant;
@@ -69,7 +62,7 @@ class EventPage{
 	public $year = "";
 	
 	/**
-     * Number of times the event has repeated, including this one
+     * Number of times the occurrence has repeated, including this one
      *
      * @var int
      *
@@ -127,13 +120,13 @@ class EventPage{
 	/**
      * Array of occurrences as defined by the RRule
      *
-     * @var int
+     * @var Array
      *
      */
-	public $dateList = 0;
+	public $dateList = NULL;
 	
 	/**
-     * The RRule Object from which the EventPage was made
+     * The RRule Object from which the OccurrencePage was made
      *
      * @var RRule
      *
@@ -141,7 +134,7 @@ class EventPage{
 	public $rrule = null;
 	
 	/**
-     * The RRule String from which the EventPage was made
+     * The RRule String from which the OccurrencePage was made
      *
      * @var String
      *
@@ -163,34 +156,47 @@ class EventPage{
 	);
 
 	/**
-     * Construct an EventPage Object using an occurrence and a page
+     * Construct an OccurrencePage Object using an occurrence and a page
      *
-     * @param DateTime $event DateTime Object representing a certain point in time
-     * @param Page $page The page for which we're creating an event.
+     * @param DateTime $occurrence DateTime Object representing a certain point in time.
+     * @param RRule $rrule The RRule used to generate the occurrences.
+     * @param Page $page The page for which we're creating an occurrence.
+     * 
      *
      */
-	function __construct(DateTime $event, $RRule, $page=NULL){
-		//Set dateList to the list of occurrences on the original page
-		$this->dateList = $page->occurrences;
+	function __construct(DateTime $occurrence, RRule $rrule, $page=NULL){
 		//Set reference to original page, this way we avoid calling all fields.
         $this->page = $page;
         
+        //Initialize RRule related properties using the
+        $this->initRRuleProps($RRule);
+        
         //initialize date related properties using the occurrence instance.
-        $this->initDateProps($event);
+        $this->initDateProps($occurrence);
     }
     
     /**
      * initDateProps is a helper method to initialize the Date related props (dayName, dayNumber, etc.)
      *
-     * @param DateTime $event DateTime Object representing a certain point in time
+     * @param DateTime $occurrence DateTime Object representing a certain point in time
+     * @param RRule $rrule RRule Object representing the original reccurrence rule from which the occurrence came
+     */
+    private function initDateProps(DateTime $occurrence) {
+	    $this->dayName = self::week_days[$occurrence->format('N')];
+		$this->dayNumber = $occurrence->format('j');
+		$this->monthName = $occurrence->format('F');
+		$this->monthNumber = $occurrence->format('n');
+		$this->year = $occurrence->format('Y');
+    }
+    
+    /**
+     * initRRuleProps is a helper method to initialize the RRule related props (rrule, rruleString, etc.)
+     *
+     * @param RRule $rrule
      *
      */
-    private function initDateProps(DateTime $event) {
-	    $this->dayName = self::week_days[$event->format('N')];
-		$this->dayNumber = $event->format('j');
-		$this->monthName = $event->format('F');
-		$this->monthNumber = $event->format('n');
-		$this->year = $event->format('Y');
+    private function initRRuleProps(RRule $rrule) {
+    	
     }
     
 }

@@ -51,7 +51,7 @@ class RecurMe extends WireData implements Module {
 		require_once(dirname(__FILE__) . '/php-rrule/src/RRuleInterface.php');
 		require_once(dirname(__FILE__) . '/php-rrule/src/RRule.php');
 		require_once(dirname(__FILE__) . '/php-rrule/src/RSet.php');
-		require_once(dirname(__FILE__) . '/EventPage.php');
+		require_once(dirname(__FILE__) . '/OccurrencePage.php');
 	}	
 	
 	/**
@@ -170,7 +170,7 @@ class RecurMe extends WireData implements Module {
 		$occurrences = $this->makeOccurrenceDateArray($page->occurrences);
 		echo count($occurrences);
 		foreach($occurrences as $occurrence) {
-			array_push($eventArray, new EventPage($occurrence,$page));
+			array_push($eventArray, new OccurrencePage($occurrence,$page));
 		}
 		return $eventArray;
 	}
