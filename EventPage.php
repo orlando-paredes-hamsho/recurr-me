@@ -26,7 +26,7 @@ class EventPage{
      * @var string
      *
      */
-	public $dateList = NULL;
+	public $dateList = "";
 	
 	/**
      * Name of the week day, formatted using the week_days constant;
@@ -34,7 +34,7 @@ class EventPage{
      * @var string
      *
      */
-	public $dayName = NULL;
+	public $dayName = "";
 	
 	/**
      * Name of the Month, Capitalized
@@ -42,7 +42,7 @@ class EventPage{
      * @var string
      *
      */
-	public $dayNumber = NULL;
+	public $dayNumber = "";
 	
 	/**
      * Name of the Month, Capitalized
@@ -50,7 +50,7 @@ class EventPage{
      * @var string
      *
      */
-	public $monthName = NULL;
+	public $monthName = "";
 	
 	/**
      * Month Number, no leading zeros
@@ -58,7 +58,7 @@ class EventPage{
      * @var string
      *
      */
-	public $monthNumber = NULL;
+	public $monthNumber = "";
 	
 	/**
      * Four digit representation of the year.
@@ -66,7 +66,87 @@ class EventPage{
      * @var string
      *
      */
-	public $year = NULL;
+	public $year = "";
+	
+	/**
+     * Number of times the event has repeated, including this one
+     *
+     * @var int
+     *
+     */
+	public $repeatCount = 0;
+	
+	/**
+     * Is this the original occurrence?
+     *
+     * @var bool
+     *
+     */
+	public $isOriginal = false;
+	
+	/**
+     * Start datetime object set by the RRule, does not necessarily equal the first occurrence
+     *
+     * @var DateTime
+     *
+     */
+	public $dateStart = NULL;
+	
+	/**
+     * Datetime object set for ending the reccurrence by the RRule, dos not necessarily equal the last occurrence
+     *
+     * @var DateTime
+     *
+     */
+	public $dateUntil = NULL;
+	
+	/**
+     * Recurrence Frequency set by the RRule
+     *
+     * @var String
+     *
+     */
+	public $frequency = 0;
+	
+	/**
+     * Recurrence Interval set by the RRule
+     *
+     * @var String
+     *
+     */
+	public $interval = 1;
+	
+	/**
+     * Total number of occurrences in the RRule
+     *
+     * @var int
+     *
+     */
+	public $count = 0;
+	
+	/**
+     * Array of occurrences as defined by the RRule
+     *
+     * @var int
+     *
+     */
+	public $dateList = 0;
+	
+	/**
+     * The RRule Object from which the EventPage was made
+     *
+     * @var RRule
+     *
+     */
+	public $rrule = null;
+	
+	/**
+     * The RRule String from which the EventPage was made
+     *
+     * @var String
+     *
+     */
+	public $rruleToText = "";
 	
 	/**
      * Array representing the weekdays as numbers
@@ -89,7 +169,7 @@ class EventPage{
      * @param Page $page The page for which we're creating an event.
      *
      */
-	function __construct(DateTime $event, $page=NULL){
+	function __construct(DateTime $event, $RRule, $page=NULL){
 		//Set dateList to the list of occurrences on the original page
 		$this->dateList = $page->occurrences;
 		//Set reference to original page, this way we avoid calling all fields.
