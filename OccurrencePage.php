@@ -1,4 +1,12 @@
 <?php
+	
+/** 
+* Requiring these in case the Occurrence Page wants to be used without the module wrapper 
+* Because I know that there's one of you that's going to try that
+*/
+require_once(dirname(__FILE__) . '/php-rrule/src/RRuleInterface.php');
+require_once(dirname(__FILE__) . '/php-rrule/src/RRule.php');
+require_once(dirname(__FILE__) . '/php-rrule/src/RSet.php');
 
 /**
  * OccurrencePage 
@@ -161,12 +169,18 @@ class OccurrencePage{
      * @param DateTime $occurrence DateTime Object representing a certain point in time.
      * @param RRule $rrule The RRule used to generate the occurrences.
      * @param Page $page The page for which we're creating an occurrence.
-     * 
+     * @param int $repeatCount number of times the reccurrence has repeated
      *
      */
-	function __construct(DateTime $occurrence, RRule $rrule, $page=NULL){
+	function __construct(DateTime $occurrence, RRule\RRule $rrule, Page $page=NULL, int $repeatCount = 0){
 		//Set reference to original page, this way we avoid calling all fields.
         $this->page = $page;
+        
+        //Set repeatCount as the number of occurrence that this represents
+        $this->repeatCount = $repeatCount;
+        
+        //Set isOriginal based on the number of occurrence repeat
+        $this->isOriginal = ($repeatCount > 0) ? false : true;
         
         //Initialize RRule related properties using the
         $this->initRRuleProps($rrule);
@@ -187,6 +201,7 @@ class OccurrencePage{
 		$this->monthName = $occurrence->format('F');
 		$this->monthNumber = $occurrence->format('n');
 		$this->year = $occurrence->format('Y');
+		$this->date = $occurrence;
     }
     
     /**
@@ -195,8 +210,22 @@ class OccurrencePage{
      * @param RRule $rrule
      *
      */
-    private function initRRuleProps(RRule $rrule) {
-    	
+    private function initRRuleProps(RRule\RRule $rrule) {
+	    //Getting the internal RRule Array;
+	    $rule = $rrule->getRule();
+	    
+	    //Getting the recurrence count
+	    $count = count($rrule);
+	    
+	    //Setting the RRule related properties
+		$this->dateStart = $rule['DTSTART'];
+		$this->dateUntil = ($rule['UNTIL']) ? $rule['UNTIL'] : $rrule[$count - 1] ;
+		$this->frequency = $rule['FREQ'];
+		$this->interval = $rule['INTERVAL'];
+		$this->count = $count;
+		$this->dateList = $rrule->getOccurrences();
+		$this->rrule = $rrule;
+		$this->rruleToText = $rrule->rfcString();
     }
     
 }
